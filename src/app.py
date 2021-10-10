@@ -7,7 +7,7 @@
 
 __doc__ = "provide a user interface for the main module."#information describing the purpose of this module
 __status__ = "Prototype"#should be one of 'Prototype' 'Development' 'Production' 'Deprecated' 'Release'
-__version__ = "3.0.0"# version number,date or about last modification made compared to the previous version
+__version__ = "4.0.0"# version number,date or about last modification made compared to the previous version
 __license__ = "public domain"# ref to an official existing License
 #__copyright__ = "Copyright 2000, The X Project"
 __date__ = "2016-02-25"#started creation date / year month day
@@ -29,14 +29,6 @@ import main
 
 
 
-### The same log message can be used in many cases with different variables
-### starting line with log message here display a larger part of it.
-LOG1='main module class instance'
-LOG2='main template constante={}'
-LOG3='application run fonction finished'
-
-
-
 class Application():
 	"""software application as object"""
 	def __init__(self,user_name,prog_name,cfg,dirs,env):
@@ -53,7 +45,7 @@ class Application():
 		self.data_dir= dirs['data']
 		
 		### test main module class instance
-		logger.log_debug(LOG1)
+		logger.log_debug(6)
 		self.o=main.Advanced_Main(adv_main_template_argument=3,main_template_argument=1)
 
 
@@ -61,10 +53,10 @@ class Application():
 		"""operates the application object"""
 
 		### test module function and class instance
-		logger.log_debug(LOG2.format(main.TEMPLATE_CONSTANTE))
+		logger.log_debug(7,[main.TEMPLATE_CONSTANTE])
 		self.o.template_method(3)
-		self.o.adv_template_method(3)		
-		logger.log_debug(LOG3)
+		self.o.adv_template_method(3)
+		logger.log_debug(8)
 		
 		return os.EX_OK
 	

@@ -1,0 +1,48 @@
+### program settings
+###
+### comment lines with #
+### tab characters are strictly prohibited for indentation
+
+
+
+SYSTEM:
+   
+ - name: local
+   category: positiv_flag
+   shortflag: l
+   longflag: local
+   help: "will not create files outside program directory"
+
+
+VERBOSITY:
+   
+ - name: logfile
+   category: choice
+   shortflag: fv
+   longflag: logfile_verbosity
+   type: int
+   qantum: 1
+   choices: [0,1,2,3,4,5]
+   default: 0
+   help: "output verbosity level"
+   
+ - name: terminal
+   category: choice
+   shortflag: tv
+   longflag: terminal_verbosity
+   type: int
+   qantum: 1
+   choices: [0,1,2,3,4,5]
+   default: 0
+   help: "output verbosity level"
+   
+ - name: syslog
+   category: choice
+   shortflag: sv
+   longflag: syslog_verbosity
+   type: int
+   qantum: 1
+   choices: [0,1,2,3,4,5]
+   default: 0
+   help: "output verbosity level"
+

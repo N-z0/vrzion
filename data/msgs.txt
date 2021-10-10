@@ -1,0 +1,21 @@
+this program was designed for Linux operating system.[{} detected]
+logs systems are setup
+starting
+ending
+
+main module class instance
+main template constante={}
+application run fonction finished
+
+main template method qantum:{}
+advanced main instance qantum:{}
+advanced main method qantum:{}
+valu not equal zero
+valu greater then 1
+valu equal 0
+
+debug log lib
+info log lib
+warning log lib
+error log lib
+critical log lib
