@@ -12,6 +12,12 @@ SYSTEM:
    shortflag: l
    longflag: local
    help: "will not create files outside program directory"
+   
+ - name: cache
+   category: positiv_flag
+   shortflag: rc
+   longflag: recache
+   help: "reset all files in cache"
 
 
 VERBOSITY:
