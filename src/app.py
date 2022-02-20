@@ -7,7 +7,7 @@
 
 __doc__ = "provide a user interface for the main module."#information describing the purpose of this module
 __status__ = "Prototype"#should be one of 'Prototype' 'Development' 'Production' 'Deprecated' 'Release'
-__version__ = "4.0.0"# version number,date or about last modification made compared to the previous version
+__version__ = "5.0.0"# version number,date or about last modification made compared to the previous version
 __license__ = "public domain"# ref to an official existing License
 #__copyright__ = "Copyright 2000, The X Project"
 __date__ = "2016-02-25"#started creation date / year month day
@@ -31,18 +31,20 @@ import main
 
 class Application():
 	"""software application as object"""
-	def __init__(self,user_name,prog_name,cfg,dirs,env):
+	def __init__(self,prog_name,cfg,dirs,data_pathnames,env):
 		"""initialization of the application"""
 		
 		### setup names
 		self.prog_name=prog_name
-		self.user_name=user_name
+		self.user_name=env['USER']
 		
-		### setup path
+		### setup path 
 		self.working_dir=dirs['cwd']
 		self.home_dir=dirs['home']
 		self.cache_dir=dirs['cache']
-		self.data_dir= dirs['data']
+		
+		### setup datafiles
+		self.data_pathnames= data_pathnames
 		
 		### test main module class instance
 		logger.log_debug(6)
