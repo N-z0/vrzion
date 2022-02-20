@@ -7,7 +7,7 @@
 
 __doc__ = "this modul is in charge of collecting config options and settings for starting program."#information describing the purpose of this prog
 __status__ = "Development"#should be one of 'Prototype' 'Development' 'Production' 'Deprecated' 'Release'
-__version__ = "5.0.0"# version number,date or about last modification made compared to the previous version
+__version__ = "6.0.0"# version number,date or about last modification made compared to the previous version
 __license__ = "public domain"# ref to an official existing License
 __date__ = "2016-02-25"#started creation date / year month day
 __author__ = "N-zo syslog@laposte.net"#the creator origin of this prog,
@@ -39,11 +39,10 @@ LOGS_DIRECTORY="logs"
 CACHE_DIRECTORY="cache"
 DATA_DIRECTORY="data"
 
-MSGS_NAME="msgs"
-MSGS_EXT="txt"
-CFG_FORMAT_FILE="format.yml"
-CFG_SYSTEM_FILE="system.ini"
-CFG_USER_FILE="user.ini"
+MSGS_FILE="msgs"
+CFG_FORMAT_FILE="format"
+CFG_SYSTEM_FILE="system"
+CFG_USER_FILE="user"
 LOG_FILE="logs.tsv"
 
 PLATFORMS = ('linux','darwin','netbsd','freebsd','openbsd') # are the current supported OS platforms
@@ -121,40 +120,20 @@ def get_cfg_dirs(parent_dir,prog_name):
 	return pathnames_list
 
 
-def find_file(directories,file_name):
-	"""get the log file path"""
-	for directory in directories :
-		fullpath= pathnames.join_pathname(directory,file_name)
-		if checks.pathname(fullpath) :
-			#print(fullpath)
-			return fullpath
-
-
-def compile_data_files(directories):
-
-	data_pathnames={}
+def compile_files_paths(directories):
+	"""from a list of directories only return the first file found
+	(filename extensions are ignored, if several files have the same name but with different extensions, only the first one is kept)"""
+	### ignoring filename extensions allows to change the format of files without having to change their referencing 
+	files_paths={}
 	for d in directories :
 		if checks.directory_pathname(d) :
 			#print("compile pathnames in ",d)
 			for f in pathnames.get_recursive_content(d,includ_directories=False,fullpath=False) :
-				
-				dir_path=pathnames.get_path(f)
-				dir_path_list=[]
-				while dir_path :
-					dir_path_list.append( pathnames.get_name(dir_path) )
-					dir_path=pathnames.get_path(dir_path)
-				dir_path_list.reverse()
-				#print(dir_path_list)
-				parent=data_pathnames
-				for index in dir_path_list :
-					parent.setdefault(index,{})
-					parent=parent[index]
-					
-				name=pathnames.get_base_name(f)
-				parent.setdefault(name,pathnames.join_pathname(d,f))
-
-	#print(data_pathnames)
-	return data_pathnames
+				data_path=pathnames.join_pathname(pathnames.get_path(f),pathnames.get_base_name(f))
+				full_path=pathnames.join_pathname(d,f)
+				files_paths.setdefault(data_path,full_path)
+	#print(files_paths)
+	return files_paths
 
 
 def set_logger(prog_name,msgsfile,syslog_verbosity,terminal_verbosity,logfile_verbosity,logfile):
@@ -173,10 +152,10 @@ def get_prog_name():
 	return name
 
 
-def start(user_name,prog_name,cfg,dirs,data_pathnames,env):
+def start(prog_name,cfg,dirs,data_pathnames,env):
 	"""start main activity"""
 	logger.log_debug(3)
-	a = app.Application(user_name,prog_name,cfg,dirs,data_pathnames,env)
+	a = app.Application(prog_name,cfg,dirs,data_pathnames,env)
 	exit_stat = a.run()
 	return exit_stat
 
@@ -194,8 +173,11 @@ if __name__ == '__main__':
 	"""start procedure"""
 	
 	env= platform.get_shell_env()
-
-	user_name=platform.get_user_name()
+	
+	### the user_name is not always useful
+	### a lot of other data takes the place 
+	### whatever, the env data already includes the username
+	#user_name=platform.get_user_name()
 	
 	### prog_name used by: XDG directories; the set of name process; messages for syslogs;translate domain
 	prog_name=get_prog_name()
@@ -213,7 +195,8 @@ if __name__ == '__main__':
 	data_dirs=get_data_dirs(parent_dir,prog_name)
 	cfg_dirs=get_cfg_dirs(parent_dir,prog_name)
 	
-	default_cfg_file=find_file(cfg_dirs,CFG_FORMAT_FILE)
+	cfg_pathnames=compile_files_paths(cfg_dirs)
+	default_cfg_file=cfg_pathnames[CFG_FORMAT_FILE]
 	cfg_parser=config.Config()
 	cfg_parser.read_format(default_cfg_file)
 	cfg=cfg_parser.get()
@@ -224,25 +207,25 @@ if __name__ == '__main__':
 		cache_dirs= [cache_dirs[-1]]
 		data_dirs= [data_dirs[-1]]
 	else :
-		system_cfg_file=find_file(cfg_dirs,CFG_SYSTEM_FILE)
-		user_cfg_file=find_file(cfg_dirs,CFG_USER_FILE)
+		system_cfg_file=cfg_pathnames[CFG_SYSTEM_FILE]
+		user_cfg_file=cfg_pathnames[CFG_USER_FILE]
 		cfg_file_list=list(filter(None,[system_cfg_file,user_cfg_file]))# remove None from the list
 		if cfg_file_list :# if list not empty
 			#print(cfg_file_list)
 			cfg_parser.read_configfiles(cfg_file_list)
 			cfg=cfg_parser.get()
-	dirs={'cwd':working_dir,'home':home_dir,'cache':cache_dirs[0],'data':data_dirs}
+	dirs={'cwd':working_dir,'home':home_dir,'cache':cache_dirs[0]}
 	
-	data_pathnames=compile_data_files(data_dirs)
+	data_pathnames=compile_files_paths(data_dirs)
 	
-	msgsfile= data_pathnames[MSGS_NAME][MSGS_EXT]
+	msgsfile= data_pathnames[MSGS_FILE]
 	logfile= pathnames.join_pathname(log_dirs[0],LOG_FILE)
 	cfg_logs= cfg['VERBOSITY']
 	set_logger(prog_name,msgsfile,cfg_logs['syslog'],cfg_logs['terminal'],cfg_logs['logfile'],logfile)
 	
 	check_platform() # here because want setup the logs system first
 	
-	exit_stat=start(user_name,prog_name,cfg,dirs,data_pathnames,env)
+	exit_stat=start(prog_name,cfg,dirs,data_pathnames,env)
 	
 	finsih(exit_stat)
 
