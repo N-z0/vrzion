@@ -7,7 +7,7 @@
 
 __doc__ = "this modul is in charge of collecting config options and settings for starting program."#information describing the purpose of this prog
 __status__ = "Development"#should be one of 'Prototype' 'Development' 'Production' 'Deprecated' 'Release'
-__version__ = "4.0.0"# version number,date or about last modification made compared to the previous version
+__version__ = "5.0.0"# version number,date or about last modification made compared to the previous version
 __license__ = "public domain"# ref to an official existing License
 __date__ = "2016-02-25"#started creation date / year month day
 __author__ = "N-zo syslog@laposte.net"#the creator origin of this prog,
@@ -39,7 +39,8 @@ LOGS_DIRECTORY="logs"
 CACHE_DIRECTORY="cache"
 DATA_DIRECTORY="data"
 
-MSGS_FILE="msgs.txt"
+MSGS_NAME="msgs"
+MSGS_EXT="txt"
 CFG_FORMAT_FILE="format.yml"
 CFG_SYSTEM_FILE="system.ini"
 CFG_USER_FILE="user.ini"
@@ -129,6 +130,33 @@ def find_file(directories,file_name):
 			return fullpath
 
 
+def compile_data_files(directories):
+
+	data_pathnames={}
+	for d in directories :
+		if checks.directory_pathname(d) :
+			#print("compile pathnames in ",d)
+			for f in pathnames.get_recursive_content(d,includ_directories=False,fullpath=False) :
+				
+				dir_path=pathnames.get_path(f)
+				dir_path_list=[]
+				while dir_path :
+					dir_path_list.append( pathnames.get_name(dir_path) )
+					dir_path=pathnames.get_path(dir_path)
+				dir_path_list.reverse()
+				#print(dir_path_list)
+				parent=data_pathnames
+				for index in dir_path_list :
+					parent.setdefault(index,{})
+					parent=parent[index]
+					
+				name=pathnames.get_base_name(f)
+				parent.setdefault(name,pathnames.join_pathname(d,f))
+
+	#print(data_pathnames)
+	return data_pathnames
+
+
 def set_logger(prog_name,msgsfile,syslog_verbosity,terminal_verbosity,logfile_verbosity,logfile):
 	"""set the logs system"""
 	#print(logfile)
@@ -145,10 +173,10 @@ def get_prog_name():
 	return name
 
 
-def start(user_name,prog_name,cfg,dirs,env):
+def start(user_name,prog_name,cfg,dirs,data_pathnames,env):
 	"""start main activity"""
 	logger.log_debug(3)
-	a = app.Application(user_name,prog_name,cfg,dirs,env)
+	a = app.Application(user_name,prog_name,cfg,dirs,data_pathnames,env)
 	exit_stat = a.run()
 	return exit_stat
 
@@ -205,14 +233,16 @@ if __name__ == '__main__':
 			cfg=cfg_parser.get()
 	dirs={'cwd':working_dir,'home':home_dir,'cache':cache_dirs[0],'data':data_dirs}
 	
-	msgsfile= find_file(data_dirs,MSGS_FILE)
+	data_pathnames=compile_data_files(data_dirs)
+	
+	msgsfile= data_pathnames[MSGS_NAME][MSGS_EXT]
 	logfile= pathnames.join_pathname(log_dirs[0],LOG_FILE)
 	cfg_logs= cfg['VERBOSITY']
 	set_logger(prog_name,msgsfile,cfg_logs['syslog'],cfg_logs['terminal'],cfg_logs['logfile'],logfile)
 	
 	check_platform() # here because want setup the logs system first
 	
-	exit_stat=start(user_name,prog_name,cfg,dirs,env)
+	exit_stat=start(user_name,prog_name,cfg,dirs,data_pathnames,env)
 	
 	finsih(exit_stat)
 
