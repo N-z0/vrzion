@@ -7,7 +7,7 @@
 
 __doc__ = "summarize python modules for indexing"#information describing the purpose of this module
 __status__ = "Development"#should be one of 'Prototype' 'Development' 'Production' 'Deprecated' 'Release'
-__version__ = "2.0.0"# version number,date or about last modification made compared to the previous version
+__version__ = "3.0.0"# version number,date or about last modification made compared to the previous version
 __license__ = "public domain"# ref to an official existing License
 #__copyright__ = "Copyright 2000, The X Project"
 __date__ = "2016-02-25"#started creation date / year month day
@@ -19,7 +19,8 @@ __contact__ = "syslog@laposte.net"# current contact adress for more info about t
 
 
 ### Py parsers
-import symtable
+#import symtable
+import ast # is more complex than symtable but gives more details
 
 
 
@@ -30,78 +31,142 @@ FUNCTIONS='functions'
 
 
 
-def get_py_summary(py_path,py_name):
-	"""return an index for the given python file"""
-	modul_list=[]
-	class_dico={}
-	constant_list=[]
-	function_dico={}
-
-	py_file=open(py_path,'r')
-	py_txt=py_file.read()
+def get_py_imports(ast_nodes):
+	"""return an index of imported modules"""
 	
-	### detection de moduls (from,import,as)
-	### Damn !
-	### the Symtable module could have done the trick
-	### but for the Imorted Moduls it does not work
-	### a "from math import *" is not "seen"
-	### there is the has_import_star method but it bugs :S
-	### and an import "this" as "that" gives "that" without "this"
-	### so i do it "myself"
-	for line in py_txt.splitlines() :
-		line=line.replace(',',' ')
-		lines=line.split(';')
-		for line in lines :
-			line=line.split()
-			if len(line)>1 :
-				if line[0]=='from' :
-					for m in line[3:] :
-						if m=='as' : break
-						m=line[1]+'.'+m
-						if not m in modul_list :
-							modul_list.append( m )
-				elif line[0]=='import' :
-					for m in line[1:] :
-						if m=='as' : break
-						if not m in modul_list :
-							modul_list.append( m )
+	modul_list=set()
+	
+	for node in ast_nodes :#ast.iter_child_nodes(ast_nodes)
+		if isinstance(node,ast.Import) :
+			for modul_node in node.names :#ast.iter_child_nodes(ast_nodes)
+				#print(modul_node.asname)
+				#print(modul_node.name)
+				modul_list.add( modul_node.name )
+		
+		elif isinstance(node,ast.ImportFrom) :
+			from_names=node.module
+			#print(node.level)
+			for modul_node in node.names :#ast.iter_child_nodes(ast_nodes)
+				#print(modul_node.asname)
+				#print(modul_node.name)
+				modul_name=modul_node.name
+				if modul_name=='*' :
+					modul_list.add( from_names )
 				else :
-					pass
+					modul_list.add( '.'.join([from_names,modul_name]) )
 	
-	### use symtable for others things than imported modules
-	st= symtable.symtable(py_txt,py_name,'exec')
-	#print(dir(st))
-	for s in st.get_symbols() :
-		#print(s.get_name())
-		#print(s.get_identifiers())
-		#print(s.get_symbols())
-		### skip symtable imported modules
-		if s.is_imported()==True :
-			pass
-			#modul_list.append(s.get_name())
-			#if s.has_import_star() : print('import *')
-		### get others things
-		elif s.is_assigned()==True :
-			if s.is_namespace()==False :
-				constant_list.append(s.get_name())
-			else :
-				st2=s.get_namespace()
-				st2_tip=st2.get_type()
-				if st2_tip=='function' :
-					#print(dir(st2))
-					function_dico[s.get_name()]=st2.get_parameters()
-				elif st2_tip=='class' :
-					metods={}
-					#print(st2.get_symbols())
-					for s2 in st2.get_symbols() :
-						#print(s2)
-						### to avoid that the default values "None,False,True" of arguments of the methods been considered as method themselves:
-						###	(s2.is_assigned(),s2.is_local(),s2.is_namespace(),s2.is_referenced() )
-						if s2.is_namespace()==True :
-							st3=s2.get_namespace()
-							metods[s2.get_name()]=st3.get_parameters()
-					class_dico[s.get_name()]=metods
+	return modul_list
 
-	index={MODULS:modul_list,CLASS:class_dico,CONSTANTS:constant_list,FUNCTIONS:function_dico}
+
+def get_py_constants(ast_nodes):
+	"""return an index of constants"""
+	
+	constants_list=set()
+	
+	for node in ast_nodes :#ast.iter_child_nodes(ast_nodes)
+		if isinstance(node,ast.Assign) :
+			#print(dir(node))
+			#print(node.type_comment)
+			for target_node in node.targets :#ast.iter_child_nodes(ast_nodes)
+				#print(dir(target_node))
+				#print("ID",target_node.id)
+				constants_list.add( target_node.id )
+			
+			### it doesn't make much sens for me but it appears that value contents value of previous node
+			#print(dir(node.value))
+			if hasattr(node.value,'kind') and hasattr(node.value,'n') and hasattr(node.value,'s') :
+				#print(node.value.kind) # dont know what it is
+				#print(node.value.n)# contents value of the variable (same as s)
+				#print(node.value.s)# contents value of the variable (same as n)
+				pass
+			else:
+				#print(dir(node.value))
+				pass
+	
+	return constants_list
+
+
+def get_py_functions(ast_nodes,method=False):
+	"""return an index of functions and their attributes"""
+	
+	fonctions_dico={}
+	
+	for node in ast_nodes :#ast.iter_child_nodes(ast_nodes)
+		if isinstance(node,ast.FunctionDef) :
+			#print(dir(node))
+			function_name=node.name
+			#print(node.type_comment)
+			#print(node.decorator_list)
+			#print(node.returns)
+			#print("args:",dir(node.args))
+			attributes_list=[]
+			defaults_list=[]
+			first=True
+			for a in node.args.args :#ast.iter_child_nodes(ast_nodes)
+				#print(dir(a))
+				#print(a.annotation)
+				attribute_name=a.arg
+				if not (first is True and method is True and attribute_name=='self') :
+					attributes_list.append(attribute_name)
+				first=False
+			### list of default values for arguments, that can be passed positionally.
+			## they correspond to the last "n" arguments.
+			for d in node.args.defaults :#ast.iter_child_nodes(ast_nodes)
+				#print(dir(d))
+				default_value= d.value
+				defaults_list.append(default_value)
+				#print(d.kind) # None
+				#print(d.n) # same as value
+				#print(d.s) # same as value
+			#print(node.args.kw_defaults) # empty list
+			#print(node.args.kwonlyargs) # empty list
+			#print(node.args.posonlyargs) # empty list
+			args=False
+			kwargs=False
+			### *arg mean a list of unknown numbers of parameters can be given to the function, or not at all
+			if hasattr(node.args.vararg,'arg') :
+				#print(node.args.vararg.arg) # None
+				args=True
+			### **arg mean a dictionary of unknown numbers of parameters can be given to the function, or not at all
+			if hasattr(node.args.kwarg,'arg') :
+				#print(node.args.kwarg.arg)
+				kwargs=True
+			attributes_number= len(attributes_list)
+			defaults_number= len(defaults_list)
+			optional_list= [False]*(attributes_number-defaults_number) + [True]*defaults_number
+			fonctions_dico[function_name]={'attributes':attributes_list,'optional':optional_list,'*':args,'**':kwargs}
+	
+	return fonctions_dico
+
+
+def get_py_classes(ast_nodes):
+	"""return an index of classes and their attributes and methods"""
+	
+	classes_dico={}
+	
+	for node in ast_nodes : #ast.iter_child_nodes(ast_nodes)
+		if isinstance(node,ast.ClassDef) :
+			class_name=node.name
+			methods= get_py_functions(node.body,method=True)
+			classes_dico[class_name]=methods
+	
+	return classes_dico
+
+
+def get_py_summary(py_file):
+	"""return an index for the given python file"""
+	
+	with open(py_file,'r') as pf :
+		### type_comments=False the type of variable can be declarer in python but its not usual for dynamic language
+		tree = ast.parse(pf.read(),type_comments=False)
+		#print(ast.dump(tree))
+		
+		### get the things
+		moduls_list=get_py_imports(tree.body)
+		constants_list=get_py_constants(tree.body)
+		functions_dico=get_py_functions(tree.body)
+		classes_dico=get_py_classes(tree.body)
+		
+	index={MODULS:moduls_list,CLASS:classes_dico,CONSTANTS:constants_list,FUNCTIONS:functions_dico}
 	return index
 
