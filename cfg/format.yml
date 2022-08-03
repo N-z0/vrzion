@@ -4,18 +4,62 @@
 ### tab characters are strictly prohibited for indentation
 
 
+APP:
+   
+ - name: name
+   category: valu
+   shortflag: n
+   longflag: name
+   type: str
+   qantum: 1
+   default: '*'
+   help: "python file to process"
+   symbols: PATH
+   
+ - name: index
+   category: valu
+   shortflag: i
+   longflag: index
+   type: str
+   qantum: 1
+   default: '.vrz.db'
+   help: "the versions index file"
+   symbols: STRING
+   
+ - name: directory
+   category: valu
+   shortflag: d
+   longflag: directory
+   type: str
+   qantum: 1
+   default: '.'
+   help: "where to search"
+   symbols: PATH
+   
+ - name: test
+   category: positiv_flag
+   shortflag: t
+   longflag: test
+   help: "do not write anything"
+   
+ - name: wipe
+   category: positiv_flag
+   shortflag: w
+   longflag: wipe
+   help: "remove newer versions"
+
 
 SYSTEM:
    
  - name: local
    category: positiv_flag
-   shortflag: l
+   shortflag: L
    longflag: local
    help: "will not create files outside program directory"
    
  - name: cache
    category: positiv_flag
-   shortflag: rc
+   shortflag: RC
    longflag: recache
    help: "reset all files in cache"
 
