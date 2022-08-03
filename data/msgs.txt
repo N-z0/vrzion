@@ -3,19 +3,47 @@ logs systems are setup
 starting
 ending
 
-main module class instance
-main template constante={}
-application run fonction finished
 
-main template method qantum:{}
-advanced main instance qantum:{}
-advanced main method qantum:{}
-valu not equal zero
-valu greater then 1
-valu equal 0
 
-debug log lib
-info log lib
-warning log lib
-error log lib
-critical log lib
+
+### app.py messages
+getting list of files
+numbers of files found:{}
+numbers of python files:{}
+not found database file:{}
+load database file
+add in database python file
+newer python file in database
+delete newer python file in database 
+add in indexer database python files
+new version:{}
+ignoring wrong version
+new version already written:{}
+write python file version:{}
+write database file
+
+
+
+
+
+### database.py messages
+reading database file:{}
+writing database file:{}
+py path found in database:{}
+add new py path in database:{}
+py file already exist in database:{}
+files sizes are not matching
+skip because files timestamps are matching
+files timestamps are not matching
+keep the exiting file timestamp in database:{}
+update the exiting file timestamp in database:{}
+add new file:{}
+
+
+
+
+
+
+
+
+
