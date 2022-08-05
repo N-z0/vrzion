@@ -1,0 +1,9 @@
+#File	#date	#Source	#Software	#Creator	#Contributors	#Owner	#Rights	#RightsURL	#ContactURL
+*						N-z0	Rights specified by the local license file	license.md	syslog@laposte.net
+docs/contents/logo/logo.svg	2022	fractal tree		Nz0		N-z0	CC0 1.0	http://creativecommons.org/publicdomain/zero/1.0/	syslog@laposte.net
+src/app.py	2016-02-25			N-zo	Nzo		public domain		syslog@laposte.net
+src/database.py	2016-02-25			N-zo	Nzo		public domain		syslog@laposte.net
+src/indexer.py	2016-02-25			N-zo	Nzo		public domain		syslog@laposte.net
+src/meta.py	2022-07-30			N-zo	Nzo		public domain		syslog@laposte.net
+src/starter.py	2016-02-25			N-zo	Nzo		public domain		syslog@laposte.net
+src/summarize.py	2016-02-25			N-zo	Nzo		public domain		syslog@laposte.net
